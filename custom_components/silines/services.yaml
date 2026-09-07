@@ -1,0 +1,16 @@
+pulse_relay:
+  name: Trigger relay pulse
+  description: Sends a short-timed pulse command to the targeted Silines relay switch entity.
+  target:
+    entity:
+      integration: silines
+      domain: switch
+  fields:
+    duration_ms:
+      name: Duration
+      description: >-
+        The duration in milliseconds for the relay to remain active. If omitted, the
+        device default hardware pulse configuration will be triggered.
+      required: true
+      selector:
+        text: {}
