@@ -2,7 +2,7 @@
 
 from homeassistant.const import Platform
 
-DOMAIN = "silines"
+DOMAIN = "silines_gen"
 
 DEFAULT_IP = "192.168.1.20"
 DEFAULT_PORT = 80
