@@ -1,6 +1,6 @@
 {
-  "domain": "silines",
-  "name": "Silines",
+  "domain": "silines_gen",
+  "name": "Silines Gen",
   "codeowners": ["@Silines-Dev"],
   "config_flow": true,
   "documentation": "https://github.com/Silines-Dev/silines-homeassistant",
