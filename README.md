@@ -2,7 +2,7 @@
 
 **English Setup Guide** | [Русское руководство по настройке](./README_RU.md)
 
-An official-grade custom integration for **Silines** controllers (e.g., BOREAS series) in Home Assistant. This integration operates completely locally via asynchronous HTTP polling.
+An official-grade custom integration for **Silines** controllers (e.g., BOREAS and RODOS series) in Home Assistant. This integration operates completely locally via asynchronous HTTP polling.
 
 ---
 
