@@ -7,10 +7,12 @@ from typing import Any
 from uuid import uuid4
 import aiohttp
 import voluptuous as vol
+import homeassistant.helpers.config_validation as cv
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers import device_registry as dr
+
 from .const import (
     DEFAULT_IP,
     DEFAULT_PASSWORD,
@@ -67,9 +69,7 @@ class SilinesConfigFlow(ConfigFlow, domain=DOMAIN):
             }
         )
 
-    async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle the initial step where the user enters device details."""
         errors: dict[str, str] = {}
         if user_input is not None:
@@ -82,37 +82,37 @@ class SilinesConfigFlow(ConfigFlow, domain=DOMAIN):
                     if entry.data.get("ip") == user_input["ip"] and entry.data.get("port") == user_input["port"]:
                         return self.async_abort(reason="already_configured")
 
-            device_model, valied_json, error_code = await self._test_connection(
-                user_input["ip"],
-                user_input["port"],
-                user_input["username"],
-                user_input["password"],
-                user_input["api_timeout"]
-            )
-            if error_code:
-                errors["base"] = error_code
-            else:
-                cache_key = f"silines_cache_{user_input['ip']}_{user_input['port']}"
-                self.hass.data[cache_key] = valied_json
-                dev_reg = dr.async_get(self.hass)
-                silines_devices_total = sum(
-                    1 for device in dev_reg.devices.values()
-                    if device.manufacturer == "silines"
+                device_model, valied_json, error_code = await self._test_connection(
+                    user_input["ip"],
+                    user_input["port"],
+                    user_input["username"],
+                    user_input["password"],
+                    user_input["api_timeout"]
                 )
-                instance_counter = silines_devices_total + 1
+                if error_code:
+                    errors["base"] = error_code
+                else:
+                    cache_key = f"silines_cache_{user_input['ip']}_{user_input['port']}"
+                    self.hass.data[cache_key] = valied_json
+                    dev_reg = dr.async_get(self.hass)
+                    silines_devices_total = sum(
+                        1 for device in dev_reg.devices.values()
+                        if device.manufacturer == "silines"
+                    )
+                    instance_counter = silines_devices_total + 1
                 
-                random_token = uuid4().hex
-                final_unique_id = f"silines_{random_token}_{instance_counter}"
+                    random_token = uuid4().hex
+                    final_unique_id = f"silines_{random_token}_{instance_counter}"
 
-                await self.async_set_unique_id(final_unique_id)
-                self._abort_if_unique_id_configured()
+                    await self.async_set_unique_id(final_unique_id)
+                    self._abort_if_unique_id_configured()
 
-                display_name = device_model if device_model != "Device" else f"Silines Device {instance_counter}"
+                    display_name = device_model if device_model != "Device" else f"Silines Device {instance_counter}"
 
-                return self.async_create_entry(
-                    title=display_name,
-                    data=user_input
-                )
+                    return self.async_create_entry(
+                        title=display_name,
+                        data=user_input
+                    )
 
         return self.async_show_form(
             step_id="user",
@@ -120,16 +120,13 @@ class SilinesConfigFlow(ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def async_step_reconfigure(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_reconfigure(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle reconfiguration of network parameters seamlessly."""
         errors: dict[str, str] = {}
         entry = self._get_reconfigure_entry()
 
         if user_input is not None:
-            current_update_interval = entry.data.get("update_interval", DEFAULT_UPDATE_INTERVAL)
-            if user_input["api_timeout"] >= current_update_interval:
+            if user_input["api_timeout"] >= user_input["update_interval"]:
                 errors["base"] = "timeout_greater_than_interval"
             else:
                 existing_entries = self.hass.config_entries.async_entries(DOMAIN)
@@ -163,8 +160,39 @@ class SilinesConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_reauth(self, entry_data: dict[str, Any]) -> ConfigFlowResult:
-        """Handle reauthentication if credentials expire or change."""
-        return await self.async_step_reconfigure()
+        """Handle reauthentication triggering."""
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm (self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Handle reauthentication confirmation by the user."""
+        errors: dict[str, str] = {}
+        entry = self._get_reauth_entry()
+
+        if user_input is not None:
+            reauth_input = {**entry.data, **user_input}
+            device_model, valied_json, error_code = await self._test_connection(
+                reauth_input["ip"],
+                reauth_input["port"],
+                reauth_input["username"],
+                reauth_input["password"],
+                reauth_input["api_timeout"]
+            )
+            
+            if error_code:
+                errors["base"] = error_code
+            else:
+                cache_key = f"silines_cache_{reauth_input['ip']}_{reauth_input['port']}"
+                self.hass.data[cache_key] = valied_json
+                return self.async_update_reload_and_abort(entry, data={**entry.data, **user_input})
+        
+        return self.async_show_form(
+            step_id="reauth_confirm",
+            data_schema=vol.Schema({
+                vol.Required("username", default=entry.data.get("username")): cv.string,
+                vol.Required("password"): cv.string,
+            }),
+            errors=errors,
+        )
 
     async def _test_connection(
         self, ip: str, port: int, username: str, password: str, api_timeout: float

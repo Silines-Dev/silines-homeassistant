@@ -9,6 +9,8 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.exceptions import ConfigEntryAuthFailed
+
 from .const import DOMAIN, PLATFORMS, DEFAULT_API_TIMEOUT
 from .models import SilinesDeviceState, StandardRelay
 import logging
@@ -73,7 +75,7 @@ class SilinesHttpClient:
                     data_url, auth=self.auth, timeout=aiohttp.ClientTimeout(total=self.api_timeout)
                 ) as response:
                     if response.status in (401, 403):
-                        raise SilinesHttpClient.SilinesHttpClientException(
+                        raise ConfigEntryAuthFailed(
                             f"Authentication failed for Silines device at {self._config_entry.data['ip']}:{self._config_entry.data['port']}: HTTP {response.status}"
                         )
                     if response.status != 200:
@@ -86,6 +88,8 @@ class SilinesHttpClient:
             raise SilinesHttpClient.SilinesHttpClientException(f"Connection error: {err}") from err
         except (ValueError, TypeError) as err:
             raise SilinesHttpClient.SilinesHttpClientException(f"Data format corruption or invalid types received: {err}") from err
+        except ConfigEntryAuthFailed:
+            raise
         except Exception as err:
             raise SilinesHttpClient.SilinesHttpClientException(f"Unexpected exception: {err}") from err
 
@@ -154,6 +158,9 @@ class SilinesCoordinator(DataUpdateCoordinator[SilinesDeviceState]):
         try:
             raw_json = await self.http_client.get_json("/api/main.json")
             return SilinesDeviceState(raw_json, self.config_entry.unique_id)
+        except ConfigEntryAuthFailed:
+            for id in self.switch_lock: self.switch_lock[id][0] = 0
+            raise
         except Exception as err:
             for id in self.switch_lock: self.switch_lock[id][0] = 0
             raise UpdateFailed(err) from err

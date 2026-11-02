@@ -24,6 +24,14 @@
           "update_interval": "Polling Interval",
           "api_timeout": "API Timeout"
         }
+      },
+      "reauth_confirm": {
+        "title": "Reauthenticate Silines Device",
+        "description": "The credentials for your Silines controller are no longer valid. Please enter the correct API login and password.",
+        "data": {
+          "username": "API Login",
+          "password": "API Password"
+        }
       }
     },
     "error": {
@@ -34,21 +42,12 @@
     },
     "abort": {
       "already_configured": "This Silines device is already configured in the system.",
-      "already_in_progress": "Configuration of this Silines controller is already in progress."
+      "already_in_progress": "Configuration of this Silines controller is already in progress.",
+      "reconfigure_successful": "Reconfiguration was successful.",
+      "reauth_successful": "Reauthentication was successful."
     }
   },
-  "services": {
-    "pulse_relay": {
-      "name": "Trigger relay pulse",
-      "description": "Sends a short-timed pulse command to the targeted Silines relay switch entity.",
-      "fields": {
-        "duration_ms": {
-          "name": "Duration (ms)",
-          "description": "The duration in milliseconds for the relay to remain active. If omitted, the device default hardware pulse configuration will be triggered."
-        }
-      }
-    }
-  },
+  "services": {},
   "entity": {
     "button": {
       "pulse_button": {

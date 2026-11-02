@@ -14,13 +14,13 @@ An official-grade custom integration for **Silines** controllers (e.g., BOREAS a
 2. Click on the **three dots** in the top right corner and select **Custom repositories**.
 3. Paste the URL of this repository into the **Repository** field.
 4. Select **Integration** as the category and click **Add**.
-5. Find **Silines** in the integration list and click **Download**.
+5. Find **Silines Gen** in the integration list and click **Download**.
 6. **Restart** your Home Assistant server.
 
 ### Method 2: Manual Installation
 
 1. Clone or download this repository.
-2. Copy the `custom_components/silines` folder into your Home Assistant configuration directory (e.g., `/config/custom_components/silines`).
+2. Copy the `custom_components/silines_gen` folder into your Home Assistant configuration directory (e.g., `/config/custom_components/silines_gen`).
 3. **Restart** your Home Assistant server.
 
 ---
@@ -29,7 +29,7 @@ An official-grade custom integration for **Silines** controllers (e.g., BOREAS a
 
 1. In the Home Assistant UI, navigate to **Settings** ➡️ **Devices & Services**.
 2. Click the **Add Integration** button in the bottom right corner.
-3. Search for **Silines** and select it.
+3. Search for **Silines Gen** and select it.
 4. Fill in the network and authentication details form:
    * **Device IP Address:** The local IP address of your Silines controller.
    * **Port:** The HTTP port (Default is `80`).
